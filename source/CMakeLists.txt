@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+if (SPIRV_GENERATOR_CACHE)
+  set(GENERATOR_OUTPUT_DIRECTORY "${SPIRV_GENERATOR_CACHE}")
+else()
+  set(GENERATOR_OUTPUT_DIRECTORY "${spirv-tools_BINARY_DIR}")
+endif()
+
+if (NOT SPIRV_GENERATOR_CACHE OR NOT EXISTS ${SPIRV_GENERATOR_CACHE})
+
 set(GRAMMAR_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_grammar_tables.py")
 set(VIMSYNTAX_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_vim_syntax.py")
 set(XML_REGISTRY_PROCESSING_SCRIPT "${spirv-tools_SOURCE_DIR}/utils/generate_registry_tables.py")
@@ -28,8 +36,8 @@ set(VKDEBUGINFO100_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1
 # function() definitions are not suitable because they create new scopes.
 macro(spvtools_core_tables CONFIG_VERSION)
   set(GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/spirv.core.grammar.json")
-  set(GRAMMAR_INSTS_INC_FILE "${spirv-tools_BINARY_DIR}/core.insts-${CONFIG_VERSION}.inc")
-  set(GRAMMAR_KINDS_INC_FILE "${spirv-tools_BINARY_DIR}/operand.kinds-${CONFIG_VERSION}.inc")
+  set(GRAMMAR_INSTS_INC_FILE "${GENERATOR_OUTPUT_DIRECTORY}/core.insts-${CONFIG_VERSION}.inc")
+  set(GRAMMAR_KINDS_INC_FILE "${GENERATOR_OUTPUT_DIRECTORY}/operand.kinds-${CONFIG_VERSION}.inc")
   add_custom_command(OUTPUT ${GRAMMAR_INSTS_INC_FILE} ${GRAMMAR_KINDS_INC_FILE}
     COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
       --spirv-core-grammar=${GRAMMAR_JSON_FILE}
@@ -49,8 +57,8 @@ endmacro(spvtools_core_tables)
 
 macro(spvtools_enum_string_mapping CONFIG_VERSION)
   set(GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/spirv.core.grammar.json")
-  set(GRAMMAR_EXTENSION_ENUM_INC_FILE "${spirv-tools_BINARY_DIR}/extension_enum.inc")
-  set(GRAMMAR_ENUM_STRING_MAPPING_INC_FILE "${spirv-tools_BINARY_DIR}/enum_string_mapping.inc")
+  set(GRAMMAR_EXTENSION_ENUM_INC_FILE "${GENERATOR_OUTPUT_DIRECTORY}/extension_enum.inc")
+  set(GRAMMAR_ENUM_STRING_MAPPING_INC_FILE "${GENERATOR_OUTPUT_DIRECTORY}/enum_string_mapping.inc")
   add_custom_command(OUTPUT ${GRAMMAR_EXTENSION_ENUM_INC_FILE}
      ${GRAMMAR_ENUM_STRING_MAPPING_INC_FILE}
     COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
@@ -73,7 +81,7 @@ macro(spvtools_vimsyntax CONFIG_VERSION CLVERSION)
   set(GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/spirv.core.grammar.json")
   set(GLSL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.glsl.std.450.grammar.json")
   set(OPENCL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.opencl.std.100.grammar.json")
-  set(VIMSYNTAX_FILE "${spirv-tools_BINARY_DIR}/spvasm.vim")
+  set(VIMSYNTAX_FILE "${GENERATOR_OUTPUT_DIRECTORY}/spvasm.vim")
   add_custom_command(OUTPUT ${VIMSYNTAX_FILE}
       COMMAND ${PYTHON_EXECUTABLE} ${VIMSYNTAX_PROCESSING_SCRIPT}
       --spirv-core-grammar=${GRAMMAR_JSON_FILE}
@@ -89,7 +97,7 @@ endmacro(spvtools_vimsyntax)
 macro(spvtools_glsl_tables CONFIG_VERSION)
   set(CORE_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/spirv.core.grammar.json")
   set(GLSL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.glsl.std.450.grammar.json")
-  set(GRAMMAR_INC_FILE "${spirv-tools_BINARY_DIR}/glsl.std.450.insts.inc")
+  set(GRAMMAR_INC_FILE "${GENERATOR_OUTPUT_DIRECTORY}/glsl.std.450.insts.inc")
   add_custom_command(OUTPUT ${GRAMMAR_INC_FILE}
     COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
       --extinst-glsl-grammar=${GLSL_GRAMMAR_JSON_FILE}
@@ -103,7 +111,7 @@ endmacro(spvtools_glsl_tables)
 macro(spvtools_opencl_tables CONFIG_VERSION)
   set(CORE_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/spirv.core.grammar.json")
   set(OPENCL_GRAMMAR_JSON_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/${CONFIG_VERSION}/extinst.opencl.std.100.grammar.json")
-  set(GRAMMAR_INC_FILE "${spirv-tools_BINARY_DIR}/opencl.std.insts.inc")
+  set(GRAMMAR_INC_FILE "${GENERATOR_OUTPUT_DIRECTORY}/opencl.std.insts.inc")
   add_custom_command(OUTPUT ${GRAMMAR_INC_FILE}
     COMMAND ${PYTHON_EXECUTABLE} ${GRAMMAR_PROCESSING_SCRIPT}
       --extinst-opencl-grammar=${OPENCL_GRAMMAR_JSON_FILE}
@@ -114,7 +122,7 @@ macro(spvtools_opencl_tables CONFIG_VERSION)
 endmacro(spvtools_opencl_tables)
 
 macro(spvtools_vendor_tables VENDOR_TABLE SHORT_NAME OPERAND_KIND_PREFIX)
-  set(INSTS_FILE "${spirv-tools_BINARY_DIR}/${VENDOR_TABLE}.insts.inc")
+  set(INSTS_FILE "${GENERATOR_OUTPUT_DIRECTORY}/${VENDOR_TABLE}.insts.inc")
   set(GRAMMAR_FILE "${SPIRV_HEADER_INCLUDE_DIR}/spirv/unified1/extinst.${VENDOR_TABLE}.grammar.json")
   if(NOT EXISTS ${GRAMMAR_FILE})
     set(GRAMMAR_FILE "${spirv-tools_SOURCE_DIR}/source/extinst.${VENDOR_TABLE}.grammar.json")
@@ -132,7 +140,7 @@ macro(spvtools_vendor_tables VENDOR_TABLE SHORT_NAME OPERAND_KIND_PREFIX)
 endmacro(spvtools_vendor_tables)
 
 macro(spvtools_extinst_lang_headers NAME GRAMMAR_FILE)
-  set(OUT_H ${spirv-tools_BINARY_DIR}/${NAME}.h)
+  set(OUT_H ${GENERATOR_OUTPUT_DIRECTORY}/${NAME}.h)
   add_custom_command(OUTPUT ${OUT_H}
     COMMAND ${PYTHON_EXECUTABLE} ${LANG_HEADER_PROCESSING_SCRIPT}
       --extinst-grammar=${GRAMMAR_FILE}
@@ -165,7 +173,7 @@ add_custom_target(spirv-tools-vimsyntax DEPENDS ${VIMSYNTAX_FILE})
 set_property(TARGET spirv-tools-vimsyntax PROPERTY FOLDER "SPIRV-Tools utilities")
 
 # Extract the list of known generators from the SPIR-V XML registry file.
-set(GENERATOR_INC_FILE ${spirv-tools_BINARY_DIR}/generators.inc)
+set(GENERATOR_INC_FILE ${GENERATOR_OUTPUT_DIRECTORY}/generators.inc)
 set(SPIRV_XML_REGISTRY_FILE ${SPIRV_HEADER_INCLUDE_DIR}/spirv/spir-v.xml)
 add_custom_command(OUTPUT ${GENERATOR_INC_FILE}
   COMMAND ${PYTHON_EXECUTABLE} ${XML_REGISTRY_PROCESSING_SCRIPT}
@@ -192,7 +200,7 @@ set_source_files_properties(
   PROPERTIES HEADER_FILE_ONLY TRUE)
 
 set(SPIRV_TOOLS_BUILD_VERSION_INC
-  ${spirv-tools_BINARY_DIR}/build-version.inc)
+  ${GENERATOR_OUTPUT_DIRECTORY}/build-version.inc)
 set(SPIRV_TOOLS_BUILD_VERSION_INC_GENERATOR
   ${spirv-tools_SOURCE_DIR}/utils/update_build_version.py)
 set(SPIRV_TOOLS_CHANGES_FILE
@@ -209,6 +217,15 @@ add_custom_command(OUTPUT ${SPIRV_TOOLS_BUILD_VERSION_INC}
 add_custom_target(spirv-tools-build-version
    DEPENDS ${SPIRV_TOOLS_BUILD_VERSION_INC})
 set_property(TARGET spirv-tools-build-version PROPERTY FOLDER "SPIRV-Tools build")
+
+else()
+
+add_custom_target(core_tables)
+add_custom_target(enum_string_mapping)
+add_custom_target(extinst_tables)
+add_custom_target(spirv-tools-build-version)
+
+endif()
 
 list(APPEND PCH_DEPENDS ${ENUM_STRING_MAPPING_CPP_DEPENDS} ${OPCODE_CPP_DEPENDS} ${OPERAND_CPP_DEPENDS} ${EXTENSION_H_DEPENDS} ${EXTINST_CPP_DEPENDS} ${SPIRV_TOOLS_BUILD_VERSION_INC})
 set_source_files_properties(
@@ -370,7 +387,7 @@ function(spirv_tools_default_target_options target)
     PUBLIC
       $<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-    PRIVATE ${spirv-tools_BINARY_DIR}
+    PRIVATE ${GENERATOR_OUTPUT_DIRECTORY}
     PRIVATE ${SPIRV_HEADER_INCLUDE_DIR}
   )
   set_property(TARGET ${target} PROPERTY FOLDER "SPIRV-Tools libraries")

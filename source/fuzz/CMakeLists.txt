@@ -456,7 +456,7 @@ if(SPIRV_BUILD_FUZZER)
 			$<BUILD_INTERFACE:${spirv-tools_SOURCE_DIR}/include>
 			$<BUILD_INTERFACE:${SPIRV_HEADER_INCLUDE_DIR}>
 			$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-        PRIVATE ${spirv-tools_BINARY_DIR}
+        PRIVATE ${GENERATOR_OUTPUT_DIRECTORY}
         PRIVATE ${CMAKE_BINARY_DIR})
 
   # The fuzzer reuses a lot of functionality from the SPIRV-Tools library.

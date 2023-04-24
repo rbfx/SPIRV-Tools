@@ -38,6 +38,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(ENABLE_RTTI "Enables RTTI" OFF)
 option(SPIRV_ALLOW_TIMERS "Allow timers via clock_gettime on supported platforms" ON)
 
+option(SPIRV_GENERATOR_CACHE
+  "Cache generated artifacts to avoid build-time Python dependency"
+  ${SPIRV_GENERATOR_CACHE})
+
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   add_definitions(-DSPIRV_LINUX)
   set(SPIRV_TIMER_ENABLED ${SPIRV_ALLOW_TIMERS})
@@ -248,7 +252,11 @@ if(NOT COMMAND find_host_program)
 endif()
 
 # Tests require Python3
-find_host_package(PythonInterp 3 REQUIRED)
+if("${SPIRV_SKIP_TESTS}" AND NOT "${SPIRV_GENERATOR_CACHE} " STREQUAL " ")
+  find_host_package(PythonInterp 3)
+else()
+  find_host_package(PythonInterp 3 REQUIRED)
+endif()
 
 # Check for symbol exports on Linux.
 # At the moment, this check will fail on the OSX build machines for the Android NDK.
